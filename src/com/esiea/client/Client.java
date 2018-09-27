@@ -1,56 +1,71 @@
 package com.esiea.client;
 
+import com.esiea.game.GameGUI;
+
 import java.io.*;
 import java.net.*;
-import java.util.Scanner;
 
-// Client class
 public class Client
 {
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args)
     {
+        GameGUI gameGUI = new GameGUI();
+
         try
         {
-            Scanner scn = new Scanner(System.in);
+            Socket socket = new Socket(args[0], Integer.parseInt(args[1]));
+            DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
 
-            // getting localhost ip
-            InetAddress ip = InetAddress.getByName("localhost");
-
-            // establish the connection with server port 5056
-            Socket s = new Socket(ip, 5056);
-
-            // obtaining input and out streams
-            DataInputStream dis = new DataInputStream(s.getInputStream());
-            DataOutputStream dos = new DataOutputStream(s.getOutputStream());
-
-            // the following loop performs the exchange of
-            // information between client and client handler
             while (true)
             {
-                System.out.println(dis.readUTF());
-                String tosend = scn.nextLine();
-                dos.writeUTF(tosend);
+                String toSend = gameGUI.getInfoForServer();
+                dataOutputStream.writeUTF(toSend);
 
-                // If client sends exit,close this connection
-                // and then break from the while loop
-                if(tosend.equals("Exit"))
+                if (toSend.equals("disconnection") | toSend.equals("disconnectionad"))
                 {
-                    System.out.println("Closing this connection : " + s);
-                    s.close();
+                    System.out.println("Closing this connection : " + socket);
+                    socket.close();
                     System.out.println("Connection closed");
+                    gameGUI.setInfoForGameGUI("disconnected");
+                    gameGUI.clearInfoForServer();
                     break;
                 }
 
-                // printing date or time as requested by client
-                String received = dis.readUTF();
-                System.out.println(received);
+                String received = dataInputStream.readUTF();
+
+                if (received.contains("user"))
+                {
+                    String name = null;
+                    int id = 0;
+                    String[] result = received.split("\\s");
+                    for (int i = 0; i < result.length; i++)
+                    {
+                        name = result[0];
+                        id = Integer.parseInt(result[1]);
+                    }
+                    gameGUI.setConnected(name, id);
+                }
+
+                switch (received)
+                {
+                    case "admin":
+                        gameGUI.setConnected("admin", 0);
+                        gameGUI.clearInfoForServer();
+                    break;
+
+                    case "adminco":
+                        gameGUI.setInfoForGameGUI(received);
+                        gameGUI.clearInfoForServer();
+                    break;
+                }
             }
 
-            // closing resources
-            scn.close();
-            dis.close();
-            dos.close();
-        }catch(Exception e){
+            dataInputStream.close();
+            dataOutputStream.close();
+        }
+        catch (Exception e)
+        {
             e.printStackTrace();
         }
     }

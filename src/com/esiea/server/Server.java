@@ -1,128 +1,186 @@
 package com.esiea.server;
 
 import java.io.*;
-import java.text.*;
-import java.util.*;
 import java.net.*;
 
-// Server class
 public class Server
 {
-    public static void main(String[] args) throws IOException
-    {
-        // server is listening on port 5056
-        ServerSocket ss = new ServerSocket(5056);
+    private static int NB_MAX_CLIENTS = 100;
 
-        // running infinite loop for getting
-        // client request
+   /* ServerSocket serverSocket;
+
+    public Server()
+    {
+        try
+        {
+            serverSocket = new ServerSocket(5056);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+
+        serverModel = new ServerModel();
+    }
+
+    public void loop()
+    {
+
         while (true)
         {
-            Socket s = null;
+
+            try(Socket socket = serverSocket.accept())
+            {
+                System.out.println("A new client is connected : " + socket);
+                System.out.println("Assigning new thread for this client");
+
+                DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+
+                // if max client connected reached
+                if( serverModel.getClientIds().size() > Server.NB_MAX_CLIENTS)
+                {
+                    System.out.println("test");
+                }
+                else
+                    {
+
+                }
+                ClientHandler thread = new ClientHandler(socket, dataInputStream, dataOutputStream, serverModel);
+                thread.start();
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+    }*/
+
+    public static void main(String[] args) throws IOException
+    {
+        ServerSocket serverSocket = new ServerSocket(5056);
+        ServerModel serverModel = new ServerModel();
+
+        while (true)
+        {
+            Socket socket = null;
 
             try
             {
-                // socket object to receive incoming client requests
-                s = ss.accept();
-
-                System.out.println("A new client is connected : " + s);
-
-                // obtaining input and out streams
-                DataInputStream dis = new DataInputStream(s.getInputStream());
-                DataOutputStream dos = new DataOutputStream(s.getOutputStream());
-
+                socket = serverSocket.accept();
+                System.out.println("A new client is connected : " + socket);
+                DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
                 System.out.println("Assigning new thread for this client");
 
-                // create a new thread object
-                Thread t = new ClientHandler(s, dis, dos);
-
-                // Invoking the start() method
-                t.start();
-
+                ClientHandler clientHandler = new ClientHandler(socket, dataInputStream, dataOutputStream, serverModel);
+                clientHandler.start();
             }
-            catch (Exception e){
-                s.close();
+            catch (Exception e)
+            {
+                socket.close();
                 e.printStackTrace();
             }
         }
     }
 }
 
-// ClientHandler class
 class ClientHandler extends Thread
 {
-    DateFormat fordate = new SimpleDateFormat("yyyy/MM/dd");
-    DateFormat fortime = new SimpleDateFormat("hh:mm:ss");
-    final DataInputStream dis;
-    final DataOutputStream dos;
-    final Socket s;
+    final DataInputStream dataInputStream;
+    final DataOutputStream dataOutputStream;
+    final Socket socket;
 
+    String id;
+    ServerModel model;
 
-    // Constructor
-    public ClientHandler(Socket s, DataInputStream dis, DataOutputStream dos)
+    public ClientHandler(Socket socket, DataInputStream dataInputStream, DataOutputStream dataOutputStream, ServerModel model)
     {
-        this.s = s;
-        this.dis = dis;
-        this.dos = dos;
+        this.socket = socket;
+        this.dataInputStream = dataInputStream;
+        this.dataOutputStream = dataOutputStream;
+
+        this.id = socket.getInetAddress().toString();
+        this.model = model;
     }
 
     @Override
     public void run()
     {
-        String received;
-        String toreturn;
+        String toReturn;
+
         while (true)
         {
-            try {
+            try
+            {
+                String received = dataInputStream.readUTF();
 
-                // Ask user what he wants
-                dos.writeUTF("What do you want?[Date | Time]..\n"+
-                        "Type Exit to terminate connection.");
-
-                // receive the answer from client
-                received = dis.readUTF();
-
-                if(received.equals("Exit"))
+                if(received.equals("disconnection"))
                 {
-                    System.out.println("Client " + this.s + " sends exit...");
-                    System.out.println("Closing this connection.");
-                    this.s.close();
-                    System.out.println("Connection closed");
+                    System.out.println("Client " + this.socket + " a demandé une déconnexion...");
+                    System.out.println("Fermeture de la connexion.");
+                    this.socket.close();
+                    System.out.println("Connexion terminée");
+                    break;
+                }
+                else if (received.equals("disconnectionad"))
+                {
+                    System.out.println("Client " + this.socket + " a demandé une déconnexion...");
+                    System.out.println("Fermeture de la connexion.");
+                    this.socket.close();
+                    model.setAdminOnline(false);
+                    System.out.println("Connexion terminée");
                     break;
                 }
 
-                // creating Date object
-                Date date = new Date();
+                if (received.contains("user"))
+                {
+                    char clientNumber = received.charAt(4);
+                    toReturn = "user " + Character.toString(clientNumber);
+                    dataOutputStream.writeUTF(toReturn);
+                }
 
-                // write on output stream based on the
-                // answer from the client
-                switch (received) {
+                switch (received)
+                {
+                    case "admin admin":
+                    {
+                        if (model.isAdminOnline())
+                        {
+                            toReturn = "adminco";
+                            dataOutputStream.writeUTF(toReturn);
+                        }
+                        else
+                        {
+                            model.setAdminOnline(true);
 
-                    case "Date" :
-                        toreturn = fordate.format(date);
-                        dos.writeUTF(toreturn);
+                            toReturn = "admin";
+                            dataOutputStream.writeUTF(toReturn);
+                        }
                         break;
-
-                    case "Time" :
-                        toreturn = fortime.format(date);
-                        dos.writeUTF(toreturn);
-                        break;
+                    }
 
                     default:
-                        dos.writeUTF("Invalid input");
-                        break;
+                        dataOutputStream.writeUTF("Entrée invalide");
+                    break;
                 }
-            } catch (IOException e) {
+            }
+            catch (SocketException e)
+            {
+                e.printStackTrace();
+            }
+            catch (IOException e)
+            {
                 e.printStackTrace();
             }
         }
 
         try
         {
-            // closing resources
-            this.dis.close();
-            this.dos.close();
-
-        }catch(IOException e){
+            this.dataInputStream.close();
+            this.dataOutputStream.close();
+        }
+        catch(IOException e)
+        {
             e.printStackTrace();
         }
     }
