@@ -8,31 +8,16 @@ import static com.esiea.game.ECellState.*;
 
 public class NavalGridComponent extends JPanel
 {
-    private final int[][] grid;
     private static final int SPACE = 40;
+    private final ECellState[][] gameGrid;
+    private final Cell[][] cells = new Cell[10][10];
 
     private int cellWidth;
     private int cellHeight;
 
-    // draw cells
-    private final ECellState[][] mygrid =
-            {
-                    {EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY},
-                    {EMPTY,EMPTY,SHIP_HIDDEN,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY},
-                    {EMPTY,EMPTY,SHIP_HIDDEN,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY},
-                    {EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY},
-                    {EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY},
-                    {EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,SHIP_HIDDEN,EMPTY,EMPTY,EMPTY,EMPTY},
-                    {EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,SHIP_HIDDEN,EMPTY,EMPTY,EMPTY,EMPTY},
-                    {EMPTY,EMPTY,SHIP_HIDDEN,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY},
-                    {EMPTY,EMPTY,SHIP_HIDDEN,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY},
-                    {EMPTY,EMPTY,SHIP_HIDDEN,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY},
-            };
-    private final Cell[][] cells = new Cell[10][10];
-
-    public NavalGridComponent(int[][] grid)
+    public NavalGridComponent(ECellState[][] gameGrid, boolean isAdmin, boolean gameLaunched)
     {
-        this.grid = grid;
+        this.gameGrid = gameGrid;
 
         setMinimumSize(new Dimension(500,500) );
         setMaximumSize(new Dimension(500,500) );
@@ -48,6 +33,7 @@ public class NavalGridComponent extends JPanel
                 Cell cell = getCell(mX, mY);
 
                 cell.clicked();
+
                 repaint();
             }
         });
@@ -61,7 +47,7 @@ public class NavalGridComponent extends JPanel
         {
             for (int j = 0; j < cells[0].length; j++)
             {
-                cells[i][j] = new Cell(i,j,mygrid[i][j]);
+                cells[i][j] = new Cell(i,j,gameGrid[i][j]);
             }
         }
     }

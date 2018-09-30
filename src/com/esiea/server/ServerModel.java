@@ -10,35 +10,43 @@ public class ServerModel
 
     private boolean isAdminOnline;
 
-    public List<String> getClientIds() {
+    public List<String> getClientIds()
+    {
         return clientIds;
     }
 
-    public void setClientIds(List<String> clientIds) {
+    public void setClientIds(List<String> clientIds)
+    {
         this.clientIds = clientIds;
     }
 
-    public int[][] getGrid() {
+    public int[][] getGrid()
+    {
         return grid;
     }
 
-    public void setGrid(int[][] grid) {
+    public void setGrid(int[][] grid)
+    {
         this.grid = grid;
     }
 
-    public List<String> getLogs() {
+    public List<String> getLogs()
+    {
         return logs;
     }
 
-    public void setLogs(List<String> logs) {
+    public void setLogs(List<String> logs)
+    {
         this.logs = logs;
     }
 
-    public boolean isAdminOnline() {
+    public boolean isAdminOnline()
+    {
         return isAdminOnline;
     }
 
-    public void setAdminOnline(boolean adminOnline) {
+    public void setAdminOnline(boolean adminOnline)
+    {
         isAdminOnline = adminOnline;
     }
 }

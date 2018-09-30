@@ -1,6 +1,7 @@
 package com.esiea.game;
 
 import com.esiea.client.Client;
+import com.esiea.client.ClientModel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,11 +36,12 @@ public class GameGUI implements ActionListener
 
     private NavalGridComponent navalGrid;
     private Client client;
+    private ClientModel model;
 
     public GameGUI()
     {
-        //model = new ClientModel();
-        navalGrid = new NavalGridComponent(null /*model.getGrid()*/);
+        model = new ClientModel();
+        navalGrid = new NavalGridComponent(model.getGameGrid(), false, false);
         mainPanel.add(navalGrid, BorderLayout.CENTER);
 
         groupLayout.setAutoCreateGaps(true);
@@ -152,7 +154,8 @@ public class GameGUI implements ActionListener
             break;
 
             case "launch":
-
+                System.out.println(model.getGameGrid().toString());
+                client.launchGame(model.getGameGrid());
             break;
 
             case "fire":
@@ -174,6 +177,7 @@ public class GameGUI implements ActionListener
         readyToQuit = false;
         if (username.equals("admin"))
         {
+            model.setAdmin(true);
             this.connectionLabel.setText("Vous êtes connecté en temps que : " + username);
             this.connectionLabel.setForeground(Color.RED);
             this.launchButton.setVisible(true);
@@ -196,6 +200,11 @@ public class GameGUI implements ActionListener
     public void adminAlreadyConnected()
     {
         JOptionPane.showMessageDialog(frame, "Impossible de connecté ce compte administrateur car il y en a déjà un de connecté.", "Erreur", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public void setGameLaunched(ECellState[][] gameGrid)
+    {
+
     }
 
     public JFrame getFrame()

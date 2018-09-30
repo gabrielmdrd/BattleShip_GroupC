@@ -133,8 +133,14 @@ class ClientHandler extends Thread
                 // disconnection
                 else if(received.startsWith("deconnection::"))
                 {
-                    deconnection();
-                    break;
+                    String[] split = received.split("::");
+                    String isAdmin = split[1];
+                    if (isAdmin.equals("admin"))
+                    {
+                        model.setAdminOnline(false);
+                        deconnection();
+                        break;
+                    }
                 }
                 // launch game
                 else if(received.startsWith("launch::"))
@@ -148,47 +154,6 @@ class ClientHandler extends Thread
                         //model.launch();
                     }
                 }
-
-//                else if (received.equals("disconnectionad"))
-//                {
-//                    System.out.println("Client " + this.socket + " a demandé une déconnexion...");
-//                    System.out.println("Fermeture de la connexion.");
-//                    this.socket.close();
-//                    model.setAdminOnline(false);
-//                    System.out.println("Connexion terminée");
-//                    break;
-//                }
-//
-//                if (received.contains("user"))
-//                {
-//                    char clientNumber = received.charAt(4);
-//                    toReturn = "user " + Character.toString(clientNumber);
-//                    dataOutputStream.writeUTF(toReturn);
-//                }
-//
-//                switch (received)
-//                {
-//                    case "admin admin":
-//                    {
-//                        if (model.isAdminOnline())
-//                        {
-//                            toReturn = "adminco";
-//                            dataOutputStream.writeUTF(toReturn);
-//                        }
-//                        else
-//                        {
-//                            model.setAdminOnline(true);
-//
-//                            toReturn = "admin";
-//                            dataOutputStream.writeUTF(toReturn);
-//                        }
-//                        break;
-//                    }
-//
-//                    default:
-//                        dataOutputStream.writeUTF("Entrée invalide");
-//                        break;
-//                }
             }
             catch (SocketException e)
             {

@@ -1,5 +1,6 @@
 package com.esiea.client;
 
+import com.esiea.game.ECellState;
 import com.esiea.game.GameGUI;
 
 import java.io.*;
@@ -40,22 +41,8 @@ public class Client
             public void run() {
                 try
                 {
-
                     while (true)
                     {
-//                String toSend = gameGUI.getInfoForServer();
-//                dataOutputStream.writeUTF(toSend);
-//
-//                if (toSend.equals("disconnection") | toSend.equals("disconnectionad"))
-//                {
-//                    System.out.println("Closing this connection : " + socket);
-//                    socket.close();
-//                    System.out.println("Connection closed");
-//                    gameGUI.setInfoForGameGUI("disconnected");
-//                    gameGUI.clearInfoForServer();
-//                    break;
-//                }
-
                         String received = dataInputStream.readUTF();
 
                         switch (received)
@@ -66,6 +53,10 @@ public class Client
 
                             case "ad_connected":
                                 gameGUI.adminAlreadyConnected();
+                            break;
+
+                            case "launched":
+
                             break;
                         }
                     }
@@ -104,5 +95,18 @@ public class Client
             e.printStackTrace();
         }
         gameGUI.setDisconnected();
+    }
+
+    public void launchGame(ECellState[][] gameGrid)
+    {
+
+        try
+        {
+            dataOutputStream.writeUTF("launch::");
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
     }
 }
