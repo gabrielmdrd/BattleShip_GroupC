@@ -40,7 +40,7 @@ public class Cell implements ImageObserver {
             case SHIP_HIDDEN:
                 try
                 {
-                    ship = ImageIO.read(new File("ship.jpg"));
+                    ship = ImageIO.read(new File("ship.png"));
                 }
                 catch (IOException e)
                 {

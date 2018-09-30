@@ -47,8 +47,6 @@ public class NavalGridComponent extends JPanel
                 int mY = e.getY();
                 Cell cell = getCell(mX, mY);
 
-
-
                 cell.clicked();
                 repaint();
             }
