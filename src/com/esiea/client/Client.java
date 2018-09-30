@@ -7,66 +7,102 @@ import java.net.*;
 
 public class Client
 {
-    public static void main(String[] args)
+    private GameGUI gameGUI;
+    private String username;
+
+    private Socket socket;
+    private DataInputStream dataInputStream;
+    private DataOutputStream dataOutputStream;
+
+    public Client(String address, int port, GameGUI gameGUI)
     {
-        GameGUI gameGUI = new GameGUI();
+        this.gameGUI = gameGUI;
 
         try
         {
-            Socket socket = new Socket(args[0], Integer.parseInt(args[1]));
-            DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+            socket = new Socket(address, port);
+            dataInputStream = new DataInputStream(socket.getInputStream());
+            dataOutputStream = new DataOutputStream(socket.getOutputStream());
+        }
+        catch (IOException e)
+        {
+            // TODO: gerer l'erreur de connexion au serveur
+            e.printStackTrace();
+        }
 
-            while (true)
-            {
-                String toSend = gameGUI.getInfoForServer();
-                dataOutputStream.writeUTF(toSend);
+    }
 
-                if (toSend.equals("disconnection") | toSend.equals("disconnectionad"))
+    public void loop()
+    {
+        Thread t = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                try
                 {
-                    System.out.println("Closing this connection : " + socket);
-                    socket.close();
-                    System.out.println("Connection closed");
-                    gameGUI.setInfoForGameGUI("disconnected");
-                    gameGUI.clearInfoForServer();
-                    break;
-                }
 
-                String received = dataInputStream.readUTF();
-
-                if (received.contains("user"))
-                {
-                    String name = null;
-                    int id = 0;
-                    String[] result = received.split("\\s");
-                    for (int i = 0; i < result.length; i++)
+                    while (true)
                     {
-                        name = result[0];
-                        id = Integer.parseInt(result[1]);
+//                String toSend = gameGUI.getInfoForServer();
+//                dataOutputStream.writeUTF(toSend);
+//
+//                if (toSend.equals("disconnection") | toSend.equals("disconnectionad"))
+//                {
+//                    System.out.println("Closing this connection : " + socket);
+//                    socket.close();
+//                    System.out.println("Connection closed");
+//                    gameGUI.setInfoForGameGUI("disconnected");
+//                    gameGUI.clearInfoForServer();
+//                    break;
+//                }
+
+                        String received = dataInputStream.readUTF();
+
+                        switch (received)
+                        {
+                            case "connected":
+                                gameGUI.setConnected(username);
+                            break;
+
+                            case "ad_connected":
+                                gameGUI.adminAlreadyConnected();
+                            break;
+                        }
                     }
-                    gameGUI.setConnected(name, id);
                 }
-
-                switch (received)
+                catch (Exception e)
                 {
-                    case "admin":
-                        gameGUI.setConnected("admin", 0);
-                        gameGUI.clearInfoForServer();
-                    break;
-
-                    case "adminco":
-                        gameGUI.setInfoForGameGUI(received);
-                        gameGUI.clearInfoForServer();
-                    break;
+                    e.printStackTrace();
                 }
             }
+        });
+        t.start();
+    }
 
-            dataInputStream.close();
-            dataOutputStream.close();
+    public void connect(String username, String password)
+    {
+        this.username = username;
+
+        try
+        {
+            dataOutputStream.writeUTF("connection::" + username + "::" + password);
         }
-        catch (Exception e)
+        catch (IOException e)
         {
             e.printStackTrace();
         }
+    }
+
+    public void disconnect()
+    {
+        try
+        {
+            dataOutputStream.writeUTF("deconnection::");
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        gameGUI.setDisconnected();
     }
 }

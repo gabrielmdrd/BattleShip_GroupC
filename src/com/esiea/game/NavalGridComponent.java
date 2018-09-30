@@ -4,11 +4,31 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import static com.esiea.game.ECellState.*;
 
 public class NavalGridComponent extends JPanel
 {
     private final int[][] grid;
     private static final int SPACE = 40;
+
+    private int cellWidth;
+    private int cellHeight;
+
+    // draw cells
+    private final ECellState[][] mygrid =
+            {
+                    {EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY},
+                    {EMPTY,EMPTY,SHIP_HIDDEN,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY},
+                    {EMPTY,EMPTY,SHIP_HIDDEN,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY},
+                    {EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY},
+                    {EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY},
+                    {EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,SHIP_HIDDEN,EMPTY,EMPTY,EMPTY,EMPTY},
+                    {EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,SHIP_HIDDEN,EMPTY,EMPTY,EMPTY,EMPTY},
+                    {EMPTY,EMPTY,SHIP_HIDDEN,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY},
+                    {EMPTY,EMPTY,SHIP_HIDDEN,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY},
+                    {EMPTY,EMPTY,SHIP_HIDDEN,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY,EMPTY},
+            };
+    private final Cell[][] cells = new Cell[10][10];
 
     public NavalGridComponent(int[][] grid)
     {
@@ -23,17 +43,29 @@ public class NavalGridComponent extends JPanel
             public void mouseClicked(MouseEvent e)
             {
                 super.mousePressed(e);
-                int mouseX = e.getX();
-                int mouseY = e.getY();
+                int mX = e.getX();
+                int mY = e.getY();
+                Cell cell = getCell(mX, mY);
 
-                System.out.println(mouseX + " " + mouseY);
+
+
+                cell.clicked();
+                repaint();
             }
         });
+
+        initCells();
     }
 
-    public int[][] getGrid()
+    private void initCells()
     {
-        return grid;
+        for (int i = 0; i < cells.length; i++)
+        {
+            for (int j = 0; j < cells[0].length; j++)
+            {
+                cells[i][j] = new Cell(i,j,mygrid[i][j]);
+            }
+        }
     }
 
     @Override
@@ -41,10 +73,18 @@ public class NavalGridComponent extends JPanel
     {
         super.paintComponent(g);
 
+        Graphics2D g2d = (Graphics2D) g;
+
         int w = getWidth() - 2 * SPACE;
         int h = getHeight() - 2 * SPACE;
-        int cellw = w / 10;
-        int cellh = h / 10;
+        int cellw = Math.round(w / 10.0f);
+        int cellh = Math.round(h / 10.f);
+
+        Cell.setCellh(cellh);
+        Cell.setCellw(cellw);
+
+        cellWidth = cellw;
+        cellHeight = cellh;
 
         // draw columns
         for(int col = 0 ; col <= 10; col ++)
@@ -52,58 +92,36 @@ public class NavalGridComponent extends JPanel
             g.drawLine(col * cellw + SPACE, SPACE,col * cellw + SPACE, 10 * cellh + SPACE);
         }
 
-        // draw raws
+        // draw rows
         for(int row = 0 ; row <= 10; row ++)
         {
             g.drawLine(SPACE,row * cellh + SPACE, w + SPACE, row * cellh + SPACE);
         }
 
-        // draw cells
-        final int[][] mygrid={
-                {-1,-1,-1,-1,-1,-1,0,1,2,-1},
-                {-1,-1,-1,-1,-1,-1,0,1,2,-1},
-                {-1,0,-1,-1,-1,-1,0,1,2,-1},
-                {-1,1,-1,-1,-1,-1,0,1,2,-1},
-                {-1,2,-1,-1,-1,-1,0,1,2,-1},
-                {-1,-1,-1,-1,-1,-1,0,1,2,-1},
-                {-1,-1,-1,-1,-1,-1,0,1,2,-1},
-                {-1,-1,-1,-1,-1,-1,0,1,2,-1},
-                {-1,-1,-1,-1,-1,-1,0,1,2,-1},
-                {-1,-1,-1,-1,-1,-1,0,1,2,-1}
-        };
+        g2d.translate(SPACE, SPACE);
 
         for(int col = 0 ; col < 10; col ++)
         {
             for(int row = 0 ; row < 10; row ++)
             {
-                switch(mygrid[col][row])
-                {
-                    case -1:
-                    {
-
-                        break;
-                    }
-
-                    case 0:
-                    {
-                        break;
-                    }
-
-                    case 1:
-                    {
-                        g.setColor(Color.RED);
-                        g.fillRect(col * cellw + SPACE + 14, row * cellh + SPACE + 14, cellw - 28, cellh - 28);
-                        break;
-                    }
-
-                    case 2:
-                    {
-                        g.setColor(Color.RED);
-                        g.fillRect(col * cellw + SPACE + 4, row * cellh + SPACE + 4, cellw - 8, cellh - 8);
-                        break;
-                    }
-                }
+                cells[col][row].draw(g2d);
+                g2d.translate(0,cellh);
             }
+
+            g2d.translate(cellw, -10*cellh);
         }
+    }
+
+    public Cell getCell(int mouseX, int mouseY)
+    {
+        int col = (mouseX - SPACE) / cellWidth;
+        int row = (mouseY - SPACE) / cellHeight;
+
+        return cells[col][row];
+    }
+
+    public boolean placeShip()
+    {
+        return true;
     }
 }

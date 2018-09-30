@@ -7,7 +7,8 @@ public class Server
 {
     private static int NB_MAX_CLIENTS = 100;
 
-   /* ServerSocket serverSocket;
+    private ServerModel serverModel;
+    ServerSocket serverSocket;
 
     public Server()
     {
@@ -29,59 +30,45 @@ public class Server
         while (true)
         {
 
-            try(Socket socket = serverSocket.accept())
+            try
             {
+                Socket socket = serverSocket.accept();
+
                 System.out.println("A new client is connected : " + socket);
                 System.out.println("Assigning new thread for this client");
 
-                DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-
-                // if max client connected reached
-                if( serverModel.getClientIds().size() > Server.NB_MAX_CLIENTS)
-                {
-                    System.out.println("test");
-                }
-                else
-                    {
-
-                }
-                ClientHandler thread = new ClientHandler(socket, dataInputStream, dataOutputStream, serverModel);
-                thread.start();
+                //if max client connected reached
+//              if( serverModel.getClientIds().size() > Server.NB_MAX_CLIENTS)
+//              {
+//                  System.out.println("test");
+//              }
+//              else
+//              {
+                    ClientHandler thread = new ClientHandler(socket, serverModel);
+                    thread.start();
+              //}
             }
             catch (Exception e)
             {
                 e.printStackTrace();
             }
         }
-    }*/
+    }
 
     public static void main(String[] args) throws IOException
     {
-        ServerSocket serverSocket = new ServerSocket(5056);
-        ServerModel serverModel = new ServerModel();
+        System.out.println("debut");
 
-        while (true)
+        new Thread(new Runnable()
         {
-            Socket socket = null;
-
-            try
+            public void run()
             {
-                socket = serverSocket.accept();
-                System.out.println("A new client is connected : " + socket);
-                DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-                System.out.println("Assigning new thread for this client");
+                System.out.println("creation du server");
+                new Server().loop();
+            }
+        }).start();
 
-                ClientHandler clientHandler = new ClientHandler(socket, dataInputStream, dataOutputStream, serverModel);
-                clientHandler.start();
-            }
-            catch (Exception e)
-            {
-                socket.close();
-                e.printStackTrace();
-            }
-        }
+        System.out.println("fin.");
     }
 }
 
@@ -94,11 +81,14 @@ class ClientHandler extends Thread
     String id;
     ServerModel model;
 
-    public ClientHandler(Socket socket, DataInputStream dataInputStream, DataOutputStream dataOutputStream, ServerModel model)
+    private String username;
+
+    public ClientHandler(Socket socket, ServerModel model) throws IOException
     {
         this.socket = socket;
-        this.dataInputStream = dataInputStream;
-        this.dataOutputStream = dataOutputStream;
+
+        this.dataInputStream = new DataInputStream(socket.getInputStream());
+        this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
 
         this.id = socket.getInetAddress().toString();
         this.model = model;
@@ -115,54 +105,90 @@ class ClientHandler extends Thread
             {
                 String received = dataInputStream.readUTF();
 
-                if(received.equals("disconnection"))
+                // connection
+                if(received.startsWith("connection::"))
                 {
-                    System.out.println("Client " + this.socket + " a demandé une déconnexion...");
-                    System.out.println("Fermeture de la connexion.");
-                    this.socket.close();
-                    System.out.println("Connexion terminée");
-                    break;
-                }
-                else if (received.equals("disconnectionad"))
-                {
-                    System.out.println("Client " + this.socket + " a demandé une déconnexion...");
-                    System.out.println("Fermeture de la connexion.");
-                    this.socket.close();
-                    model.setAdminOnline(false);
-                    System.out.println("Connexion terminée");
-                    break;
-                }
-
-                if (received.contains("user"))
-                {
-                    char clientNumber = received.charAt(4);
-                    toReturn = "user " + Character.toString(clientNumber);
-                    dataOutputStream.writeUTF(toReturn);
-                }
-
-                switch (received)
-                {
-                    case "admin admin":
+                    String[] split = received.split("::");
+                    username = split[1];
+                    String password = split[2];
+                    if(username.equals("admin") & password.equals("admin"))
                     {
                         if (model.isAdminOnline())
                         {
-                            toReturn = "adminco";
-                            dataOutputStream.writeUTF(toReturn);
+                            dataOutputStream.writeUTF("ad_connected");
                         }
                         else
                         {
                             model.setAdminOnline(true);
-
-                            toReturn = "admin";
-                            dataOutputStream.writeUTF(toReturn);
+                            dataOutputStream.writeUTF("connected");
                         }
-                        break;
                     }
+                    else
+                    {
+                        // send message to client that connection is OK
+                        dataOutputStream.writeUTF("connected");
+                    }
+                }
 
-                    default:
-                        dataOutputStream.writeUTF("Entrée invalide");
+                // disconnection
+                else if(received.startsWith("deconnection::"))
+                {
+                    deconnection();
                     break;
                 }
+                // launch game
+                else if(received.startsWith("launch::"))
+                {
+                    if(!username.equals("admin"))
+                    {
+                        System.out.println("erreur : not admin");
+                    }
+                    else
+                    {
+                        //model.launch();
+                    }
+                }
+
+//                else if (received.equals("disconnectionad"))
+//                {
+//                    System.out.println("Client " + this.socket + " a demandé une déconnexion...");
+//                    System.out.println("Fermeture de la connexion.");
+//                    this.socket.close();
+//                    model.setAdminOnline(false);
+//                    System.out.println("Connexion terminée");
+//                    break;
+//                }
+//
+//                if (received.contains("user"))
+//                {
+//                    char clientNumber = received.charAt(4);
+//                    toReturn = "user " + Character.toString(clientNumber);
+//                    dataOutputStream.writeUTF(toReturn);
+//                }
+//
+//                switch (received)
+//                {
+//                    case "admin admin":
+//                    {
+//                        if (model.isAdminOnline())
+//                        {
+//                            toReturn = "adminco";
+//                            dataOutputStream.writeUTF(toReturn);
+//                        }
+//                        else
+//                        {
+//                            model.setAdminOnline(true);
+//
+//                            toReturn = "admin";
+//                            dataOutputStream.writeUTF(toReturn);
+//                        }
+//                        break;
+//                    }
+//
+//                    default:
+//                        dataOutputStream.writeUTF("Entrée invalide");
+//                        break;
+//                }
             }
             catch (SocketException e)
             {
@@ -173,15 +199,22 @@ class ClientHandler extends Thread
                 e.printStackTrace();
             }
         }
+    }
 
+    private void deconnection()
+    {
+        System.out.println("Client " + this.socket + " a demandé une déconnexion...");
+        System.out.println("Fermeture de la connexion en cours.");
         try
         {
             this.dataInputStream.close();
             this.dataOutputStream.close();
+            this.socket.close();
         }
         catch(IOException e)
         {
             e.printStackTrace();
         }
+        System.out.println("Connexion terminée");
     }
 }

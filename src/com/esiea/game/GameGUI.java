@@ -1,5 +1,7 @@
 package com.esiea.game;
 
+import com.esiea.client.Client;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -18,7 +20,6 @@ public class GameGUI implements ActionListener
 
     JButton connectionButton = new JButton("Connexion");
     JButton deconnectionButton = new JButton("Déconnexion");
-    JButton boatButton = new JButton("Placer Bateaux");
     JButton launchButton = new JButton("Lancer la partie");
     JButton fireButton = new JButton("Tirer une torpille");
 
@@ -28,13 +29,12 @@ public class GameGUI implements ActionListener
     JLabel passwordLabel = new JLabel("Mot de passe :");
     JLabel connectionLabel = new JLabel("Bienvenue sur le jeu de bataille navale du groupe C !");
 
-    private String login = "";
-    private String password = "";
-    private String infoForServer = "";
+    private String login;
+    private String password;
     private boolean readyToQuit = true;
-    private String whoIs = "";
 
     private NavalGridComponent navalGrid;
+    private Client client;
 
     public GameGUI()
     {
@@ -47,14 +47,14 @@ public class GameGUI implements ActionListener
         gamePanel.setLayout(groupLayout);
         groupLayout.setHorizontalGroup(groupLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(groupLayout.createSequentialGroup()
-                    .addComponent(loginLabel, 0, GroupLayout.DEFAULT_SIZE, 45)
-                    .addComponent(loginTextField, 0, GroupLayout.DEFAULT_SIZE, 200)
-                    .addComponent(passwordLabel, 0, GroupLayout.DEFAULT_SIZE, 90)
-                    .addComponent(passwordTextField, 0, GroupLayout.DEFAULT_SIZE, 200)
-                    .addComponent(connectionButton, 0, GroupLayout.DEFAULT_SIZE, 110)
-                    .addComponent(deconnectionButton,0, GroupLayout.DEFAULT_SIZE, 110))
+                        .addComponent(loginLabel, 0, GroupLayout.DEFAULT_SIZE, 45)
+                        .addComponent(loginTextField, 0, GroupLayout.DEFAULT_SIZE, 200)
+                        .addComponent(passwordLabel, 0, GroupLayout.DEFAULT_SIZE, 90)
+                        .addComponent(passwordTextField, 0, GroupLayout.DEFAULT_SIZE, 200)
+                        .addComponent(connectionButton, 0, GroupLayout.DEFAULT_SIZE, 110)
+                        .addComponent(deconnectionButton,0, GroupLayout.DEFAULT_SIZE, 110))
                 .addGroup(groupLayout.createSequentialGroup()
-                    .addComponent(connectionLabel, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(connectionLabel, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         groupLayout.setVerticalGroup(groupLayout.createSequentialGroup()
                 .addGroup(groupLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
@@ -63,11 +63,6 @@ public class GameGUI implements ActionListener
                         .addComponent(connectionLabel))
         );
 
-        boatButton.setVisible(false);
-        launchButton.setVisible(false);
-        fireButton.setVisible(false);
-
-        userPanel.add(boatButton);
         userPanel.add(launchButton);
         userPanel.add(fireButton);
 
@@ -77,6 +72,14 @@ public class GameGUI implements ActionListener
         deconnectionButton.setActionCommand("disconnection");
         deconnectionButton.addActionListener(this);
         deconnectionButton.setEnabled(false);
+
+        launchButton.setActionCommand("launch");
+        launchButton.addActionListener(this);
+        launchButton.setVisible(false);
+
+        fireButton.setActionCommand("fire");
+        fireButton.addActionListener(this);
+        fireButton.setVisible(false);
 
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.addWindowListener(new WindowAdapter()
@@ -90,7 +93,7 @@ public class GameGUI implements ActionListener
                 }
                 else
                 {
-                    infoForServer = "disconnection";
+                    client.disconnect();
                     try
                     {
                         TimeUnit.SECONDS.sleep(1);
@@ -108,14 +111,28 @@ public class GameGUI implements ActionListener
         frame.add(userPanel, BorderLayout.EAST);
         frame.setSize(1000, 1000);
         frame.setResizable(false);
-        frame.setVisible(true);
     }
 
     public static void main(String[] args)
     {
-        new GameGUI();
+        final GameGUI gui = new GameGUI();
+        gui.initClient();
+
+        EventQueue.invokeLater(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                gui.getFrame().setVisible(true);
+            }
+        });
     }
 
+    private void initClient()
+    {
+        client = new Client("localhost", 5056, this );
+        client.loop();
+    }
 
     @Override
     public void actionPerformed(ActionEvent e)
@@ -127,79 +144,62 @@ public class GameGUI implements ActionListener
             case "connection":
                 login = loginTextField.getText();
                 password = passwordTextField.getText();
-                infoForServer = login + " " + password;
+                client.connect(login, password);
             break;
 
             case "disconnection":
-                if (whoIs.equals("admin"))
-                {
-                    infoForServer = "disconnectionad";
-                }
-                else
-                {
-                    infoForServer = "disconnection";
-                }
+                client.disconnect();
+            break;
+
+            case "launch":
+
+            break;
+
+            case "fire":
+
+            break;
+
+            default:
             break;
         }
     }
 
-    public void setInfoForGameGUI(String info)
+    public void setDisconnected()
     {
-        switch (info)
-        {
-            case "adminco":
-                JOptionPane.showMessageDialog(frame, "Impossible de connecté ce compte administrateur car il y en a déjà un de connecté.", "Erreur", JOptionPane.ERROR_MESSAGE);
-            break;
-
-            case "disconnected":
-                this.connectionLabel.setText("Vous êtes maintenant déconnecté.");
-                this.connectionLabel.setForeground(Color.RED);
-                this.deconnectionButton.setEnabled(false);
-                this.connectionButton.setEnabled(true);
-                this.boatButton.setVisible(false);
-                this.launchButton.setVisible(false);
-                this.fireButton.setVisible(false);
-                readyToQuit = true;
-                this.frame.setTitle("Bataille Navale - Groupe C");
-                this.frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-                whoIs = "";
-            break;
-        }
+        System.exit(0);
     }
 
-    public String getInfoForServer()
-    {
-        return infoForServer;
-    }
-
-    public void clearInfoForServer()
-    {
-        infoForServer = "";
-    }
-
-    public void setConnected(String user, int id)
+    public void setConnected(String username)
     {
         readyToQuit = false;
-        if (user.equals("admin"))
+        if (username.equals("admin"))
         {
-            this.connectionLabel.setText("Vous êtes connecté en temps que : " + user);
+            this.connectionLabel.setText("Vous êtes connecté en temps que : " + username);
             this.connectionLabel.setForeground(Color.RED);
-            this.boatButton.setVisible(true);
             this.launchButton.setVisible(true);
             this.connectionButton.setEnabled(false);
             this.deconnectionButton.setEnabled(true);
-            this.frame.setTitle("Bataille Navale - Groupe C " + "[" + user + "]");
+            this.frame.setTitle("Bataille Navale - Groupe C " + "[" + username + "]");
         }
-        if (user.equals("user"))
+        else
         {
-            this.connectionLabel.setText("Vous êtes connecté en temps que : " + user + " " + id);
+            this.connectionLabel.setText("Vous êtes connecté en temps que : " + username );
             this.connectionLabel.setForeground(Color.GREEN);
             this.fireButton.setVisible(true);
             this.connectionButton.setEnabled(false);
             this.deconnectionButton.setEnabled(true);
-            this.frame.setTitle("Bataille Navale - Groupe C " + "[" + user + id + "]");
+            this.frame.setTitle("Bataille Navale - Groupe C " + "[" + username + "]");
         }
-        whoIs = user;
         this.frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+    }
+
+    public void adminAlreadyConnected()
+    {
+        JOptionPane.showMessageDialog(frame, "Impossible de connecté ce compte administrateur car il y en a déjà un de connecté.", "Erreur", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public JFrame getFrame()
+    {
+        return frame;
     }
 }
