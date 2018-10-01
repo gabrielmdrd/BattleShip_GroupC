@@ -2,6 +2,8 @@ package com.esiea.client;
 
 import com.esiea.game.ECellState;
 import com.esiea.game.GameGUI;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.*;
 import java.net.*;
@@ -14,6 +16,9 @@ public class Client
     private Socket socket;
     private DataInputStream dataInputStream;
     private DataOutputStream dataOutputStream;
+
+    private final GsonBuilder builder = new GsonBuilder();
+    private final Gson gson = builder.create();
 
     public Client(String address, int port, GameGUI gameGUI)
     {
@@ -45,18 +50,27 @@ public class Client
                     {
                         String received = dataInputStream.readUTF();
 
+                        if (received.startsWith("launched::"))
+                        {
+                            int[][] gridToUpload;
+                            String[] split = received.split("::");
+                            String grid = split[1];
+                            gridToUpload = gson.fromJson(grid, int[][].class);
+                            gameGUI.setGameLaunched(gridToUpload);
+                        }
+
                         switch (received)
                         {
                             case "connected":
                                 gameGUI.setConnected(username);
+                                if (!gameGUI.getClientModel().isAdmin())
+                                {
+                                    getGame();
+                                }
                             break;
 
                             case "ad_connected":
                                 gameGUI.adminAlreadyConnected();
-                            break;
-
-                            case "launched":
-
                             break;
                         }
                     }
@@ -88,7 +102,14 @@ public class Client
     {
         try
         {
-            dataOutputStream.writeUTF("deconnection::");
+            if (gameGUI.getClientModel().isAdmin())
+            {
+                dataOutputStream.writeUTF("deconnection::admin");
+            }
+            else
+            {
+                dataOutputStream.writeUTF("deconnection::");
+            }
         }
         catch (IOException e)
         {
@@ -97,12 +118,23 @@ public class Client
         gameGUI.setDisconnected();
     }
 
-    public void launchGame(ECellState[][] gameGrid)
+    public void launchGame(String state)
     {
-
         try
         {
-            dataOutputStream.writeUTF("launch::");
+            dataOutputStream.writeUTF("launch::" + state);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    public void getGame()
+    {
+        try
+        {
+            dataOutputStream.writeUTF("game::");
         }
         catch (IOException e)
         {

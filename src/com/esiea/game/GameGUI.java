@@ -41,7 +41,7 @@ public class GameGUI implements ActionListener
     public GameGUI()
     {
         model = new ClientModel();
-        navalGrid = new NavalGridComponent(model.getGameGrid(), false, false);
+        navalGrid = new NavalGridComponent(model.getGameGrid(), this);
         mainPanel.add(navalGrid, BorderLayout.CENTER);
 
         groupLayout.setAutoCreateGaps(true);
@@ -154,8 +154,8 @@ public class GameGUI implements ActionListener
             break;
 
             case "launch":
-                System.out.println(model.getGameGrid().toString());
-                client.launchGame(model.getGameGrid());
+                navalGrid.setNCgameGrid();
+                client.launchGame(model.getStateToString());
             break;
 
             case "fire":
@@ -195,6 +195,7 @@ public class GameGUI implements ActionListener
             this.frame.setTitle("Bataille Navale - Groupe C " + "[" + username + "]");
         }
         this.frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        navalGrid.initCells();
     }
 
     public void adminAlreadyConnected()
@@ -202,13 +203,48 @@ public class GameGUI implements ActionListener
         JOptionPane.showMessageDialog(frame, "Impossible de connecté ce compte administrateur car il y en a déjà un de connecté.", "Erreur", JOptionPane.ERROR_MESSAGE);
     }
 
-    public void setGameLaunched(ECellState[][] gameGrid)
+    public void setGameLaunched(int[][] gameGrid)
     {
+        for (int col = 0; col < 10; col++)
+        {
+            for (int row = 0; row < 10; row++)
+            {
+                switch (gameGrid[col][row])
+                {
+                    case 0:
+                        getClientModel().setState(col, row, ECellState.EMPTY);
+                    break;
 
+                    case 1:
+                        getClientModel().setState(col, row, ECellState.MISSED);
+                    break;
+
+                    case 2:
+                        getClientModel().setState(col, row, ECellState.SHIP_HIDDEN);
+                    break;
+
+                    case 3:
+                        getClientModel().setState(col, row, ECellState.SHIP_HIT);
+                    break;
+
+                    case 4:
+                        getClientModel().setState(col, row, ECellState.SHIP_SUNK);
+                    break;
+                }
+            }
+        }
+        navalGrid.initCells();
+        navalGrid.repaint();
+        model.setGameLaunched(true);
     }
 
     public JFrame getFrame()
     {
         return frame;
+    }
+
+    public ClientModel getClientModel()
+    {
+        return model;
     }
 }

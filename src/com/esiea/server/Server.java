@@ -1,5 +1,8 @@
 package com.esiea.server;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import java.io.*;
 import java.net.*;
 
@@ -83,6 +86,9 @@ class ClientHandler extends Thread
 
     private String username;
 
+    private final GsonBuilder builder = new GsonBuilder();
+    private final Gson gson = builder.create();
+
     public ClientHandler(Socket socket, ServerModel model) throws IOException
     {
         this.socket = socket;
@@ -97,8 +103,6 @@ class ClientHandler extends Thread
     @Override
     public void run()
     {
-        String toReturn;
-
         while (true)
         {
             try
@@ -141,18 +145,32 @@ class ClientHandler extends Thread
                         deconnection();
                         break;
                     }
+                    else
+                    {
+                        deconnection();
+                        break;
+                    }
                 }
                 // launch game
                 else if(received.startsWith("launch::"))
                 {
+                    int[][] currentGrid;
+                    String[] split = received.split("::");
+                    String grid = split[1];
                     if(!username.equals("admin"))
                     {
-                        System.out.println("erreur : not admin");
+                        System.out.println("Erreur : Commande Admin");
                     }
                     else
                     {
-                        //model.launch();
+                        currentGrid = gson.fromJson(grid, int[][].class);
+                        model.setGrid(currentGrid);
+                        model.setGameLaunched(true);
                     }
+                }
+                else if (received.startsWith("game::"))
+                {
+                    sendStartGrid();
                 }
             }
             catch (SocketException e)
@@ -181,5 +199,19 @@ class ClientHandler extends Thread
             e.printStackTrace();
         }
         System.out.println("Connexion terminée");
+    }
+
+    private void sendStartGrid()
+    {
+        String gridToSend;
+        try
+        {
+            gridToSend = gson.toJson(model.getGrid());
+            dataOutputStream.writeUTF("launched::" + gridToSend);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
     }
 }

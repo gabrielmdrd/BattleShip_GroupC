@@ -4,11 +4,23 @@ import java.util.List;
 
 public class ServerModel
 {
-    List<String> clientIds;
-    int[][] grid;
-    List<String> logs;
-
+    private List<String> clientIds;
     private boolean isAdminOnline;
+    private boolean isGameLaunched;
+
+    private int[][] grid =
+    {
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+    };
 
     public List<String> getClientIds()
     {
@@ -30,16 +42,6 @@ public class ServerModel
         this.grid = grid;
     }
 
-    public List<String> getLogs()
-    {
-        return logs;
-    }
-
-    public void setLogs(List<String> logs)
-    {
-        this.logs = logs;
-    }
-
     public boolean isAdminOnline()
     {
         return isAdminOnline;
@@ -48,5 +50,15 @@ public class ServerModel
     public void setAdminOnline(boolean adminOnline)
     {
         isAdminOnline = adminOnline;
+    }
+
+    public boolean isGameLaunched()
+    {
+        return isGameLaunched;
+    }
+
+    public void setGameLaunched(boolean gameLaunched)
+    {
+        isGameLaunched = gameLaunched;
     }
 }

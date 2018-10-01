@@ -6,7 +6,8 @@ import java.awt.image.ImageObserver;
 import java.io.File;
 import java.io.IOException;
 
-public class Cell implements ImageObserver {
+public class Cell implements ImageObserver
+{
     private static final int INSET = 10;
 
     private int row;
@@ -14,14 +15,16 @@ public class Cell implements ImageObserver {
     private static int cellw;
     private static int cellh;
     private ECellState state;
+    private boolean isAdmin;
 
     private Image ship;
 
-    public Cell(int row, int col, ECellState state)
+    public Cell(int row, int col, ECellState state, boolean isAdmin)
     {
         this.row = row;
         this.col = col;
         this.state = state;
+        this.isAdmin = isAdmin;
     }
 
     public void draw(Graphics2D g2d)
@@ -38,15 +41,22 @@ public class Cell implements ImageObserver {
             break;
 
             case SHIP_HIDDEN:
-                try
+                if (isAdmin)
                 {
-                    ship = ImageIO.read(new File("ship.png"));
+                    try
+                    {
+                        ship = ImageIO.read(new File("ship.png"));
+                    }
+                    catch (IOException e)
+                    {
+                        e.printStackTrace();
+                    }
+                    g2d.drawImage(ship, INSET, INSET, cellw - 2 * INSET, cellh - 2 * INSET, this);
                 }
-                catch (IOException e)
+                else
                 {
-                    e.printStackTrace();
+
                 }
-                g2d.drawImage(ship, INSET, INSET, cellw - 2 * INSET, cellh - 2 * INSET, this);
             break;
 
             case SHIP_HIT:
@@ -133,6 +143,11 @@ public class Cell implements ImageObserver {
 
             break;
         }
+    }
+
+    public void adminClicked()
+    {
+        state = ECellState.SHIP_HIDDEN;
     }
 
     @Override

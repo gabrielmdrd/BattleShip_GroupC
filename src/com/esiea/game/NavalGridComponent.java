@@ -9,15 +9,17 @@ import static com.esiea.game.ECellState.*;
 public class NavalGridComponent extends JPanel
 {
     private static final int SPACE = 40;
-    private final ECellState[][] gameGrid;
     private final Cell[][] cells = new Cell[10][10];
 
+    private ECellState[][] gameGrid;
+    private GameGUI gameGUI;
     private int cellWidth;
     private int cellHeight;
 
-    public NavalGridComponent(ECellState[][] gameGrid, boolean isAdmin, boolean gameLaunched)
+    public NavalGridComponent(ECellState[][] gameGrid, GameGUI gameGUI)
     {
         this.gameGrid = gameGrid;
+        this.gameGUI = gameGUI;
 
         setMinimumSize(new Dimension(500,500) );
         setMaximumSize(new Dimension(500,500) );
@@ -32,7 +34,22 @@ public class NavalGridComponent extends JPanel
                 int mY = e.getY();
                 Cell cell = getCell(mX, mY);
 
-                cell.clicked();
+                if (gameGUI.getClientModel().isAdmin() & !gameGUI.getClientModel().isGameLaunched())
+                {
+                    cell.adminClicked();
+                }
+                else if (gameGUI.getClientModel().isAdmin() & gameGUI.getClientModel().isGameLaunched())
+                {
+                    JOptionPane.showMessageDialog(gameGUI.getFrame(), "Action impossible car la partie est déjà lancée.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                }
+                else if (!gameGUI.getClientModel().isAdmin() & gameGUI.getClientModel().isGameLaunched())
+                {
+                    cell.clicked();
+                }
+                else if (!gameGUI.getClientModel().isAdmin() & !gameGUI.getClientModel().isGameLaunched())
+                {
+                    JOptionPane.showMessageDialog(gameGUI.getFrame(), "Action impossible car la partie n'est pas encore lancée.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                }
 
                 repaint();
             }
@@ -41,13 +58,13 @@ public class NavalGridComponent extends JPanel
         initCells();
     }
 
-    private void initCells()
+    public void initCells()
     {
         for (int i = 0; i < cells.length; i++)
         {
             for (int j = 0; j < cells[0].length; j++)
             {
-                cells[i][j] = new Cell(i,j,gameGrid[i][j]);
+                cells[i][j] = new Cell(i, j, gameGrid[i][j], gameGUI.getClientModel().isAdmin());
             }
         }
     }
@@ -104,8 +121,19 @@ public class NavalGridComponent extends JPanel
         return cells[col][row];
     }
 
-    public boolean placeShip()
+    public Cell getCellTest(int col, int row)
     {
-        return true;
+        return cells[col][row];
+    }
+
+    public void setNCgameGrid()
+    {
+        for (int col = 0; col < 10; col++)
+        {
+            for (int row = 0; row < 10; row++)
+            {
+                gameGUI.getClientModel().setState(col, row, cells[col][row].getState());
+            }
+        }
     }
 }
